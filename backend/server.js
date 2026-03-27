@@ -120,6 +120,8 @@ app.post("/api/analyze-resume", upload.single("resume"), async (req, res) => {
 // ==========================================
 app.post("/api/evaluate", express.json(), async (req, res) => {
   try {
+    // Notice we completely removed faceLostCount from the prompt!
+    // It will no longer affect the AI's score.
     const { interviewData } = req.body;
 
     if (!interviewData || interviewData.length === 0) {
@@ -137,18 +139,22 @@ app.post("/api/evaluate", express.json(), async (req, res) => {
     You are DALL-AI, an expert technical mentor. You are speaking DIRECTLY to the user face-to-face to give them feedback on their interview.
     Review the following transcript of questions and the user's answers.
     
+    CRITICAL SCORING RULES (STRICT GRADING):
+    1. You MUST evaluate the technical accuracy, depth, and relevance of the user's answers.
+    2. If the user provides NO answer, says "I don't know", or provides empty/gibberish text, you MUST give a score of 0 for that question.
+    3. Be a brutal, strict grader. An overall score of 80+ should ONLY be given for flawless, deep, highly technical answers.
+    
     CRITICAL PRONOUN RULES:
     1. You MUST address the user as "you" and "your".
-    2. You MUST refer to yourself as "I" or "my".
-    3. You are STRICTLY FORBIDDEN from using the words "the candidate", "they", "he", or "she".
-    
+    2. You are STRICTLY FORBIDDEN from using the words "the candidate", "they", "he", or "she".
+
     Evaluate their performance and return ONLY a raw JSON object with the following exact keys:
-    - "overallScore": An integer from 0 to 100 representing their total performance.
+    - "overallScore": An integer from 0 to 100 based STRICTLY on the technical quality of their answers.
     - "strengths": An array of 3 strings detailing what they answered well. (Must start with "You...")
     - "weaknesses": An array of 3 strings detailing where they lacked knowledge. (Must start with "You...")
-    - "improvementTips": A detailed paragraph giving direct, personal advice on how to improve. (Must start with "I suggest you..." or "For your next interview, you should...")
+    - "improvementTips": A detailed paragraph giving direct, technical advice on how to improve.
 
-    Do not include any markdown formatting outside the JSON.
+    Do not include any markdown formatting outside the JSON. Output ONLY valid JSON.
 
     INTERVIEW TRANSCRIPT:
     ${formattedTranscript}
@@ -173,7 +179,7 @@ app.post("/api/evaluate", express.json(), async (req, res) => {
             { role: "user", content: prompt },
           ],
           max_tokens: 1000,
-          temperature: 0.5,
+          temperature: 0.1, // Lowered temperature to make the AI more analytical and less "creative" with scores
         }),
       },
     );

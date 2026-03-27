@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import * as tf from "@tensorflow/tfjs";
+import * as blazeface from "@tensorflow-models/blazeface";
 
 function InterviewWindow() {
   const navigate = useNavigate();
@@ -26,25 +28,39 @@ function InterviewWindow() {
   const [malpracticeWarning, setMalpracticeWarning] = useState(false);
   const [strikes, setStrikes] = useState(0);
 
+  // ==========================================
+  // NEW: Real-Time Face Detection States
+  // ==========================================
+  // Change faceWarning to track the specific error message
+  const [faceWarningType, setFaceWarningType] = useState(null); // null, 'missing', or 'multiple'
+  const [faceLostCount, setFaceLostCount] = useState(0);
+  const faceModelRef = useRef(null);
+  const isFaceMissingRef = useRef(false); // Prevents counting the same incident 60x a second
+
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const currentAudioRef = useRef(null);
-
-  // NEW: The Abort Ref. This acts as a master kill-switch for pending audio
   const isCancelledRef = useRef(false);
 
-  // ==========================================
-  // NEW: BULLETPROOF UNMOUNT CLEANUP
-  // Guarantees everything shuts down when leaving the page
-  // ==========================================
+  // LOAD TENSORFLOW MODEL ON MOUNT
   useEffect(() => {
-    // BUG FIX: Reset the kill-switch on mount so React Strict Mode doesn't permanently lock it!
     isCancelledRef.current = false;
 
+    const loadAIModels = async () => {
+      try {
+        await tf.ready();
+        faceModelRef.current = await blazeface.load();
+        console.log("BlazeFace Model Loaded!");
+      } catch (err) {
+        console.error("Failed to load face detection model:", err);
+      }
+    };
+    loadAIModels();
+
     return () => {
-      isCancelledRef.current = true; // Block any "in-flight" audio fetches
+      isCancelledRef.current = true;
       if (currentAudioRef.current) {
         currentAudioRef.current.pause();
         currentAudioRef.current.src = "";
@@ -56,6 +72,7 @@ function InterviewWindow() {
     };
   }, []);
 
+  // INIT DATA
   useEffect(() => {
     if (
       location.state &&
@@ -71,6 +88,7 @@ function InterviewWindow() {
     }
   }, [location, navigate]);
 
+  // TIMER LOGIC
   useEffect(() => {
     if (!isReady || isSpeaking || timeLeft <= 0 || isSubmitting) return;
     const timerId = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
@@ -78,9 +96,7 @@ function InterviewWindow() {
   }, [isReady, isSpeaking, timeLeft, isSubmitting]);
 
   useEffect(() => {
-    if (timeLeft === 0 && isReady && isRecording) {
-      stopRecording();
-    }
+    if (timeLeft === 0 && isReady && isRecording) stopRecording();
   }, [timeLeft, isReady, isRecording]);
 
   const formatTime = (seconds) => {
@@ -89,18 +105,14 @@ function InterviewWindow() {
     return `${m}:${s < 10 ? "0" : ""}${s}`;
   };
 
-  // ==========================================
-  // TEXT-TO-SPEECH (With Abort Protection)
-  // ==========================================
+  // TEXT-TO-SPEECH
   const speakQuestion = async (text) => {
     if (!text || isCancelledRef.current) return;
-
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
       currentAudioRef.current = null;
     }
     window.speechSynthesis.cancel();
-
     setIsSpeaking(true);
 
     try {
@@ -112,15 +124,10 @@ function InterviewWindow() {
           body: JSON.stringify({ text }),
         },
       );
-
       if (!response.ok) throw new Error("Failed to fetch audio");
-
-      // ABORT CHECK: If user clicked cancel while we were waiting for the server, stop here!
       if (isCancelledRef.current) return;
 
       const blob = await response.blob();
-
-      // ABORT CHECK 2: Just to be perfectly safe before playing
       if (isCancelledRef.current) return;
 
       const audioUrl = URL.createObjectURL(blob);
@@ -133,7 +140,6 @@ function InterviewWindow() {
       };
       audio.onerror = () => setIsSpeaking(false);
 
-      // Final check before hitting play
       if (!isCancelledRef.current) audio.play();
     } catch (error) {
       console.error("Audio playback error:", error);
@@ -145,10 +151,10 @@ function InterviewWindow() {
     if (isReady && questions.length > 0) {
       setReplayCount(0);
       setTimeLeft(timeLimits[difficulty]);
-
-      const timer = setTimeout(() => {
-        speakQuestion(questions[currentIndex]);
-      }, 500);
+      const timer = setTimeout(
+        () => speakQuestion(questions[currentIndex]),
+        500,
+      );
       return () => clearTimeout(timer);
     }
   }, [currentIndex, questions, isReady, difficulty]);
@@ -160,6 +166,7 @@ function InterviewWindow() {
     }
   };
 
+  // PROCTORING CHECKS (Tabs/Fullscreen)
   useEffect(() => {
     if (!isReady) return;
     const handleVisibilityChange = () => {
@@ -180,9 +187,8 @@ function InterviewWindow() {
   }, [isReady, strikes, malpracticeWarning]);
 
   const killCameraFeed = () => {
-    if (streamRef.current) {
+    if (streamRef.current)
       streamRef.current.getTracks().forEach((track) => track.stop());
-    }
   };
 
   const triggerMalpractice = (reason) => {
@@ -193,7 +199,6 @@ function InterviewWindow() {
       isCancelledRef.current = true;
       if (currentAudioRef.current) currentAudioRef.current.pause();
       if (document.fullscreenElement) document.exitFullscreen();
-
       killCameraFeed();
       navigate("/malpractice");
     }
@@ -209,39 +214,11 @@ function InterviewWindow() {
   };
 
   // ==========================================
-  // ENVIRONMENT CHECK (Fixed Ghost Camera)
+  // WEBCAM & REAL-TIME FACE TRACKING ENGINE
   // ==========================================
-  const startEnvironment = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
-
-      // BUG FIX: Stop BOTH audio and video tracks from this temporary permission stream
-      stream.getTracks().forEach((track) => track.stop());
-
-      await document.documentElement.requestFullscreen();
-      setIsReady(true);
-    } catch (error) {
-      alert(
-        "You must allow Camera and Microphone access to start the interview.",
-      );
-    }
-  };
-
-  const handleVoluntaryCancel = () => {
-    isCancelledRef.current = true; // Activate the master kill-switch
-    if (currentAudioRef.current) currentAudioRef.current.pause();
-    window.speechSynthesis.cancel();
-
-    if (document.fullscreenElement) document.exitFullscreen();
-    killCameraFeed();
-
-    navigate("/", { state: { cancelled: true } });
-  };
-
   useEffect(() => {
+    let animationId;
+
     const startCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -253,17 +230,81 @@ function InterviewWindow() {
         console.error("Camera access denied:", err);
       }
     };
-    if (isReady) startCamera();
-    else if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
+
+    const detectFace = async () => {
+      if (
+        videoRef.current &&
+        faceModelRef.current &&
+        videoRef.current.readyState === 4 &&
+        isReady
+      ) {
+        const faces = await faceModelRef.current.estimateFaces(
+          videoRef.current,
+          false,
+        );
+
+        if (faces.length === 0) {
+          setFaceWarningType("missing");
+          if (!isFaceMissingRef.current) {
+            setFaceLostCount((prev) => prev + 1);
+            isFaceMissingRef.current = true;
+          }
+        } else if (faces.length > 1) {
+          setFaceWarningType("multiple");
+          if (!isFaceMissingRef.current) {
+            setFaceLostCount((prev) => prev + 1);
+            isFaceMissingRef.current = true;
+          }
+        } else {
+          // Exactly 1 face detected. All good!
+          setFaceWarningType(null);
+          isFaceMissingRef.current = false;
+        }
+      }
+      animationId = requestAnimationFrame(detectFace);
+    };
+
+    if (isReady) {
+      startCamera().then(() => {
+        detectFace(); // Start scanning once camera is on
+      });
+    } else if (streamRef.current) {
+      killCameraFeed();
       streamRef.current = null;
     }
+
     return () => {
-      if (streamRef.current)
-        streamRef.current.getTracks().forEach((track) => track.stop());
+      killCameraFeed();
+      if (animationId) cancelAnimationFrame(animationId);
     };
   }, [isReady]);
 
+  const startEnvironment = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+      stream.getTracks().forEach((track) => track.stop());
+      await document.documentElement.requestFullscreen();
+      setIsReady(true);
+    } catch (error) {
+      alert(
+        "You must allow Camera and Microphone access to start the interview.",
+      );
+    }
+  };
+
+  const handleVoluntaryCancel = () => {
+    isCancelledRef.current = true;
+    if (currentAudioRef.current) currentAudioRef.current.pause();
+    window.speechSynthesis.cancel();
+    if (document.fullscreenElement) document.exitFullscreen();
+    killCameraFeed();
+    navigate("/", { state: { cancelled: true } });
+  };
+
+  // AUDIO RECORDING
   const startRecording = async () => {
     if (timeLeft === 0) return;
     try {
@@ -274,7 +315,6 @@ function InterviewWindow() {
       mediaRecorderRef.current.ondataavailable = (event) => {
         if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
-
       mediaRecorderRef.current.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, {
           type: "audio/webm",
@@ -323,7 +363,6 @@ function InterviewWindow() {
   const handleNextQuestion = async () => {
     if (!currentAnswer.trim() && timeLeft > 0) return;
     setIsSubmitting(true);
-
     if (currentAudioRef.current) currentAudioRef.current.pause();
 
     const updatedHistory = [
@@ -341,16 +380,25 @@ function InterviewWindow() {
       setIsSubmitting(false);
     } else {
       try {
+        // NEW: We are now sending faceLostCount to the AI Grader!
         const response = await fetch("http://localhost:5000/api/evaluate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ interviewData: updatedHistory }),
+          body: JSON.stringify({
+            interviewData: updatedHistory,
+            faceLostCount: faceLostCount,
+          }),
         });
         const evaluation = await response.json();
         if (response.ok) {
           if (document.fullscreenElement) document.exitFullscreen();
+          // We are adding faceLostCount to the router state!
           navigate("/score", {
-            state: { result: evaluation, difficulty: difficulty },
+            state: {
+              result: evaluation,
+              difficulty: difficulty,
+              faceLostCount: faceLostCount,
+            },
           });
         } else {
           alert("Failed to score interview. Please try again.");
@@ -363,6 +411,9 @@ function InterviewWindow() {
     }
   };
 
+  // ==========================================
+  // RENDER 1: Pre-Interview Check
+  // ==========================================
   if (!isReady) {
     return (
       <div className="bg-white p-10 rounded-3xl shadow-2xl max-w-md w-full text-center border border-slate-100">
@@ -386,8 +437,8 @@ function InterviewWindow() {
         </h2>
         <p className="text-slate-500 mb-8 text-sm">
           This <span className="font-bold text-indigo-600">{difficulty}</span>{" "}
-          level interview is timed. You will have{" "}
-          {formatTime(timeLimits[difficulty])} per question.
+          level interview uses AI face-tracking to ensure fairness. Keep your
+          face visible.
         </p>
         <button
           onClick={startEnvironment}
@@ -399,6 +450,9 @@ function InterviewWindow() {
     );
   }
 
+  // ==========================================
+  // RENDER 2: Main Interview
+  // ==========================================
   return (
     <div className="w-full max-w-7xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col h-[90vh] relative">
       <div className="bg-slate-900 px-6 py-4 flex justify-between items-center z-10">
@@ -501,12 +555,39 @@ function InterviewWindow() {
               autoPlay
               playsInline
               muted
-              className="w-full h-full object-cover transform scale-x-[-1]"
+              className={`w-full h-full object-cover transform scale-x-[-1] transition duration-300 ${faceWarningType ? "opacity-50 blur-sm" : ""}`}
             />
+
+            {/* UPDATED: REAL-TIME FACE WARNING OVERLAY */}
+            {faceWarningType && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-900/40">
+                <div className="bg-red-600 text-white px-4 py-2 rounded-full font-bold animate-bounce flex items-center gap-2 shadow-2xl border-2 border-red-300">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    ></path>
+                  </svg>
+                  {faceWarningType === "missing"
+                    ? "WARNING: Face not visible in camera!"
+                    : "WARNING: Multiple faces detected!"}
+                </div>
+              </div>
+            )}
+
             <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
               <span className="bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full flex items-center gap-2">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                Live Proctoring
+                <span
+                  className={`w-2 h-2 rounded-full animate-pulse ${faceWarningType ? "bg-red-500" : "bg-green-500"}`}
+                ></span>
+                {faceWarningType ? "Tracking Lost" : "Tracking Active"}
               </span>
               <span className="bg-black/50 backdrop-blur-sm text-indigo-300 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">
                 {difficulty}
