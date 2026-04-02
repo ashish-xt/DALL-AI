@@ -16,7 +16,9 @@ function UploadResume() {
   const location = useLocation();
 
   const BACKEND_BASE_URL =
-    import.meta.env.VITE_API_BASE || "http://localhost:5000";
+    import.meta.env.VITE_API_BASE ||
+    "https://dall-ai-backend.fly.dev" ||
+    "http://localhost:5000";
 
   useEffect(() => {
     if (location.state && location.state.cancelled) {
