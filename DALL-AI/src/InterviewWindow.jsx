@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import * as tf from "@tensorflow/tfjs";
 import * as blazeface from "@tensorflow-models/blazeface";
+import { motion } from "motion/react";
 
 function InterviewWindow() {
   const navigate = useNavigate();
@@ -416,7 +417,12 @@ function InterviewWindow() {
   // ==========================================
   if (!isReady) {
     return (
-      <div className="bg-white p-10 rounded-3xl shadow-2xl max-w-md w-full text-center border border-slate-100">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4 }}
+        className="bg-white p-10 rounded-3xl shadow-xl shadow-slate-200/50 max-w-md w-full text-center border border-slate-100"
+      >
         <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
           <svg
             className="w-8 h-8"
@@ -440,13 +446,15 @@ function InterviewWindow() {
           level interview uses AI face-tracking to ensure fairness. Keep your
           face visible.
         </p>
-        <button
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={startEnvironment}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition"
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg"
         >
           Grant Access & Start
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
     );
   }
 
@@ -454,7 +462,12 @@ function InterviewWindow() {
   // RENDER 2: Main Interview
   // ==========================================
   return (
-    <div className="w-full max-w-7xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col h-[90vh] relative">
+    <motion.div 
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="w-full max-w-7xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col h-[90vh] relative"
+    >
       <div className="bg-slate-900 px-6 py-4 flex justify-between items-center z-10">
         <div className="flex items-center gap-3">
           <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
@@ -488,12 +501,14 @@ function InterviewWindow() {
           {timeLeft === 0 ? "TIME UP" : formatTime(timeLeft)}
         </div>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => setShowCancelModal(true)}
-          className="text-slate-300 hover:text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-white/10 transition"
+          className="text-slate-300 hover:text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-white/10"
         >
           Cancel Interview
-        </button>
+        </motion.button>
       </div>
 
       <div className="flex flex-col md:flex-row flex-grow overflow-hidden">
@@ -525,10 +540,12 @@ function InterviewWindow() {
               </p>
             </div>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={handleReplay}
               disabled={replayCount >= 1 || isSpeaking || timeLeft === 0}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all ${replayCount >= 1 || timeLeft === 0 ? "bg-slate-200 text-slate-400 cursor-not-allowed" : isSpeaking ? "bg-indigo-100 text-indigo-400 cursor-not-allowed" : "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 active:bg-indigo-300"}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold ${replayCount >= 1 || timeLeft === 0 ? "bg-slate-200 text-slate-400 cursor-not-allowed" : isSpeaking ? "bg-indigo-100 text-indigo-400 cursor-not-allowed" : "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 active:bg-indigo-300"}`}
             >
               <svg
                 className="w-4 h-4"
@@ -544,7 +561,7 @@ function InterviewWindow() {
                 ></path>
               </svg>
               {replayCount >= 1 ? "Replay Used" : "Replay Question (1 left)"}
-            </button>
+            </motion.button>
           </div>
         </div>
 
@@ -613,10 +630,12 @@ function InterviewWindow() {
                 disabled={isTranscribing || isSpeaking || timeLeft === 0}
               />
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
                 onClick={toggleRecording}
                 disabled={isTranscribing || isSpeaking || timeLeft === 0}
-                className={`absolute bottom-4 right-4 p-3 rounded-full shadow-md transition-all flex items-center justify-center 
+                className={`absolute bottom-4 right-4 p-3 rounded-full shadow-md flex items-center justify-center 
                   ${
                     isRecording
                       ? "bg-red-500 text-white animate-pulse hover:bg-red-600"
@@ -669,10 +688,12 @@ function InterviewWindow() {
                     ></path>
                   </svg>
                 )}
-              </button>
+              </motion.button>
             </div>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={handleNextQuestion}
               disabled={
                 isSubmitting ||
@@ -687,7 +708,7 @@ function InterviewWindow() {
                 : currentIndex === questions.length - 1
                   ? "Submit Final Answer"
                   : "Next Question"}
-            </button>
+            </motion.button>
           </div>
         </div>
       </div>
@@ -702,18 +723,22 @@ function InterviewWindow() {
               All progress will be lost and no evaluation will be generated.
             </p>
             <div className="flex gap-3">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setShowCancelModal(false)}
-                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition"
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl"
               >
                 Go Back
-              </button>
-              <button
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleVoluntaryCancel}
-                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl shadow-lg shadow-red-200 transition"
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl shadow-lg shadow-red-200"
               >
                 Yes, Exit
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>
@@ -743,16 +768,18 @@ function InterviewWindow() {
                 One more violation will result in immediate termination.
               </strong>
             </p>
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleResumeFromWarning}
-              className="px-8 py-3 bg-white text-red-900 font-bold rounded-xl hover:bg-red-50 transition shadow-xl"
+              className="px-8 py-3 bg-white text-red-900 font-bold rounded-xl hover:bg-red-50 shadow-xl"
             >
               I Understand, Resume Interview
-            </button>
+            </motion.button>
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

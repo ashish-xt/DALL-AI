@@ -1,1 +1,42 @@
 @import "tailwindcss";
+
+@theme {
+  /* Set Barlow as the primary sans font */
+  --font-sans: 'Barlow', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+  /* Core brand palette mapped to user's exact colors */
+  --color-brand-100: #B0E4CC;
+  --color-brand-500: #408A71;
+  --color-brand-700: #285A48;
+  --color-brand-900: #091413;
+
+  /* Force Dark Mode: Map base backgrounds to darkest colors and text to lightest colors */
+  --color-white: #040909; /* White becomes the absolute darkest base for cards */
+  --color-black: #f4fbf8; /* Black becomes almost white for high contrast */
+
+  /* Inverted slate scale: slate-50 is dark background, slate-900 is bright text */
+  --color-slate-50: #091413;
+  --color-slate-100: #16362a;
+  --color-slate-200: #285A48;
+  --color-slate-300: #32755c;
+  --color-slate-400: #408A71;
+  --color-slate-500: #66b09b;
+  --color-slate-600: #8ecfbc;
+  --color-slate-700: #B0E4CC;
+  --color-slate-800: #e5f5ed;
+  --color-slate-900: #f4fbf8;
+  --color-slate-950: #ffffff;
+
+  /* Inverted indigo scale: primary elements pop nicely on dark background */
+  --color-indigo-50: #040909;
+  --color-indigo-100: #091413;
+  --color-indigo-200: #1a4233;
+  --color-indigo-300: #285A48;
+  --color-indigo-400: #32755c;
+  --color-indigo-500: #408A71;
+  --color-indigo-600: #66b09b;
+  --color-indigo-700: #8ecfbc;
+  --color-indigo-800: #B0E4CC;
+  --color-indigo-900: #e5f5ed;
+  --color-indigo-950: #f4fbf8;
+}

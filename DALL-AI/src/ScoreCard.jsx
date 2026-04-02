@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { motion } from "motion/react";
 
 function ScoreCard() {
   const navigate = useNavigate();
@@ -29,17 +30,24 @@ function ScoreCard() {
 
   if (!result) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 text-center">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex flex-col items-center justify-center min-h-screen bg-slate-50 text-center"
+      >
         <h2 className="text-2xl font-bold text-slate-800 mb-4">
           No Score Data Found
         </h2>
-        <button
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => navigate("/")}
-          className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition shadow-lg"
+          className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg"
         >
           Return Home
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
     );
   }
 
@@ -58,7 +66,12 @@ function ScoreCard() {
 
   return (
     // Replaced the strict height with a min-h-screen and a nice padding buffer
-    <div className="min-h-screen bg-slate-50/50 py-10 px-4 sm:px-6 lg:px-8 font-sans text-slate-900">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="min-h-screen bg-slate-50/50 py-10 px-4 sm:px-6 lg:px-8 font-sans text-slate-900"
+    >
       {/* Main Container */}
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 items-start">
         {/* ==========================================
@@ -172,9 +185,11 @@ function ScoreCard() {
           </div>
 
           {/* Action Button outside the card for emphasis */}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => navigate("/")}
-            className="w-full py-5 px-6 bg-slate-900 hover:bg-slate-800 text-white text-lg font-bold rounded-2xl transition duration-200 shadow-xl shadow-slate-300/50 flex items-center justify-center gap-2"
+            className="w-full py-5 px-6 bg-slate-900 hover:bg-slate-800 text-white text-lg font-bold rounded-2xl shadow-xl shadow-slate-300/50 flex items-center justify-center gap-2"
           >
             Start New Interview
             <svg
@@ -190,7 +205,7 @@ function ScoreCard() {
                 d="M14 5l7 7m0 0l-7 7m7-7H3"
               ></path>
             </svg>
-          </button>
+          </motion.button>
         </div>
 
         {/* ==========================================
@@ -334,7 +349,7 @@ function ScoreCard() {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

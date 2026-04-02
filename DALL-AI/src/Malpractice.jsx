@@ -1,11 +1,17 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "motion/react";
 
 function Malpractice() {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-white p-10 rounded-3xl shadow-2xl max-w-lg w-full text-center border-t-8 border-rose-600">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="bg-white p-10 rounded-3xl shadow-2xl max-w-lg w-full text-center border-t-8 border-rose-600"
+    >
       <div className="w-20 h-20 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-6">
         <svg
           className="w-10 h-10 text-rose-600"
@@ -29,13 +35,15 @@ function Malpractice() {
         environment rules (exiting fullscreen or switching tabs). No report will
         be generated.
       </p>
-      <button
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => navigate("/")}
-        className="px-8 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition shadow-lg"
+        className="px-8 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-lg"
       >
         Return to Home
-      </button>
-    </div>
+      </motion.button>
+    </motion.div>
   );
 }
 
