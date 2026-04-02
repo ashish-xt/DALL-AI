@@ -8,6 +8,9 @@ function InterviewWindow() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const BACKEND_BASE_URL =
+    import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
   const [questions, setQuestions] = useState([]);
   const [difficulty, setDifficulty] = useState("Medium");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -117,14 +120,11 @@ function InterviewWindow() {
     setIsSpeaking(true);
 
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/generate-speech",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text }),
-        },
-      );
+      const response = await fetch(`${BACKEND_BASE_URL}/api/generate-speech`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
       if (!response.ok) throw new Error("Failed to fetch audio");
       if (isCancelledRef.current) return;
 
@@ -346,7 +346,7 @@ function InterviewWindow() {
     try {
       const formData = new FormData();
       formData.append("audio", audioBlob, "answer.webm");
-      const response = await fetch("http://localhost:5000/api/transcribe", {
+      const response = await fetch(`${BACKEND_BASE_URL}/api/transcribe`, {
         method: "POST",
         body: formData,
       });
@@ -382,7 +382,7 @@ function InterviewWindow() {
     } else {
       try {
         // NEW: We are now sending faceLostCount to the AI Grader!
-        const response = await fetch("http://localhost:5000/api/evaluate", {
+        const response = await fetch(`${BACKEND_BASE_URL}/api/evaluate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -417,7 +417,7 @@ function InterviewWindow() {
   // ==========================================
   if (!isReady) {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4 }}
@@ -462,7 +462,7 @@ function InterviewWindow() {
   // RENDER 2: Main Interview
   // ==========================================
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
