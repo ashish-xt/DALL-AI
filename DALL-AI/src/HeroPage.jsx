@@ -87,6 +87,9 @@ export default function HeroPage() {
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+              }}
               className="w-48 md:w-60 rounded-2xl border-2 border-slate-200 bg-white px-6 py-3.5 font-bold text-slate-700 transition-all duration-300 hover:bg-slate-50 hover:border-slate-300">
               View Features
             </motion.button>
@@ -138,17 +141,97 @@ export default function HeroPage() {
           </motion.div>
         </div>
       </div>
+      <FeaturesSection />
     </div>
   );
 }
 
+const FeaturesSection = () => {
+  const features = [
+    {
+      title: "Contextual Interviews",
+      description: "Our AI engine analyzes your uploaded resume to instantly generate tailored, role-specific questions.",
+      icon: (
+        <svg className="w-7 h-7 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      )
+    },
+    {
+      title: "Active Proctoring",
+      description: "Advanced head-pose tracking and tab-switching monitoring maintains strict assessment integrity.",
+      icon: (
+        <svg className="w-7 h-7 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+      )
+    },
+    {
+      title: "Voice-Based Answers",
+      description: "Candidates respond naturally using their microphone. Answers are transcribed in real-time via speech-to-text for accurate evaluation.",
+      icon: (
+        <svg className="w-7 h-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+        </svg>
+      )
+    },
+    {
+      title: "Detailed Scorecards",
+      description: "Receive immediate, comprehensive breakdowns highlighting hard skills, problem-solving, and communication.",
+      icon: (
+        <svg className="w-7 h-7 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      )
+    }
+  ];
+
+  return (
+    <section id="features" className="w-full py-24 bg-white border-t border-slate-100 flex justify-center z-10 relative scroll-mt-6">
+      <div className="max-w-7xl px-4 md:px-8 w-full flex flex-col items-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-center max-w-3xl mb-16"
+        >
+          <h2 className="text-sm font-bold text-indigo-600 uppercase tracking-widest mb-4">Core Capabilities</h2>
+          <h3 className="text-3xl md:text-5xl font-black text-slate-800 tracking-tight leading-tight mb-6">
+            Everything you need to <br className="hidden md:block" /> screen talent at scale.
+          </h3>
+          <p className="text-slate-500 text-lg">
+            DALL-AI Proctor replaces hours of manual screening with an automated, high-fidelity technical interview suite.
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full">
+          {features.map((feature, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: idx * 0.1 }}
+              className="bg-slate-50 border border-slate-100 rounded-3xl p-8 hover:shadow-2xl hover:border-indigo-200 hover:-translate-y-2 transition-all duration-300 flex flex-col items-start"
+            >
+              <div className="w-14 h-14 bg-white rounded-2xl shadow-sm border border-slate-100 mb-6 flex items-center justify-center">
+                {feature.icon}
+              </div>
+              <h4 className="text-xl font-bold text-slate-800 mb-3">{feature.title}</h4>
+              <p className="text-slate-500 text-sm leading-relaxed">{feature.description}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const Navbar = () => {
   const navigate = useNavigate();
-  const navItems = [
-    { name: "Features", link: "#features" },
-    { name: "Pricing", link: "#pricing" },
-    { name: "Contact", link: "#contact" },
-  ];
+  const navItems = [];
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -157,9 +240,7 @@ const Navbar = () => {
         {/* Desktop Navigation */}
         <NavBody>
           <NavbarLogo />
-          <NavItems items={navItems} />
           <div className="flex items-center gap-4">
-            <NavbarButton variant="secondary">Login</NavbarButton>
             <NavbarButton variant="primary" onClick={() => navigate('/setup')}>Get Started</NavbarButton>
           </div>
         </NavBody>
@@ -174,22 +255,7 @@ const Navbar = () => {
           </MobileNavHeader>
 
           <MobileNavMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)}>
-            {navItems.map((item, idx) => (
-              <a
-                key={`mobile-link-${idx}`}
-                href={item.link}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="relative text-xl font-bold text-slate-800 dark:text-slate-300 block py-2 border-b border-transparent hover:text-indigo-600 transition-colors">
-                <span className="block">{item.name}</span>
-              </a>
-            ))}
-            <div className="flex w-full flex-col gap-4 mt-8">
-              <NavbarButton
-                onClick={() => setIsMobileMenuOpen(false)}
-                variant="secondary"
-                className="w-full">
-                Login
-              </NavbarButton>
+            <div className="flex w-full flex-col gap-4 mt-2">
               <NavbarButton
                 onClick={() => { setIsMobileMenuOpen(false); navigate('/setup'); }}
                 variant="primary"
